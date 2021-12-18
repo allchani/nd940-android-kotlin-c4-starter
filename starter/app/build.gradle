@@ -5,7 +5,16 @@ apply plugin: "androidx.navigation.safeargs.kotlin"
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'com.google.gms.google-services'
 
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+def googleMapApiKey = properties.getProperty('MAPS_API_KEY')
+
 android {
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
     compileSdkVersion rootProject.compileSdkVersion
     buildToolsVersion "29.0.2"
 
@@ -16,6 +25,12 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        //MultiDex
+        multiDexEnabled = true
+
+        //Google Map Api Key
+        manifestPlaceholders = [ myApiMaps: googleMapApiKey ]
     }
     buildTypes {
         release {
@@ -122,5 +137,10 @@ dependencies {
     implementation "com.google.android.gms:play-services-location:$playServicesVersion"
     implementation "com.google.android.gms:play-services-maps:$playServicesVersion"
 
+    //Firebase
+    implementation platform('com.google.firebase:firebase-bom:29.0.1')
+    implementation 'com.firebaseui:firebase-ui-auth:5.0.0'
 
+    //Multidex
+    implementation("androidx.multidex:multidex:2.0.1")
 }
