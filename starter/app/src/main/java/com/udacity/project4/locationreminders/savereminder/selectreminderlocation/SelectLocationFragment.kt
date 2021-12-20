@@ -2,6 +2,7 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.annotation.TargetApi
 import android.app.Activity
 import android.content.Intent
@@ -52,6 +53,10 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     //For getting last location
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
+    //updated
+    private var isLocationSelected = false
+
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
@@ -98,11 +103,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         } else {
             Toast.makeText(context, "Select a location", Toast.LENGTH_LONG).show()
         }
-
-
-
-
-
     }
 
 
@@ -139,6 +139,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
         //        TODO: zoom to the user location after taking his permission
         enableMyLocation()
+//        val busan = LatLng(35.13,129.05)
+//        map.moveCamera(CameraUpdateFactory.newLatLngZoom(busan, 15f))
 
         //        TODO: put a marker to location that the user selected
         setMapLongClick(map)
@@ -175,25 +177,9 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
     }
 
+    @SuppressLint("MissingPermission")
     private fun enableMyLocation() {
         if (isPermissionGranted()) {
-            if (ActivityCompat.checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details .
-                return
-            }
             map.isMyLocationEnabled = true
             fusedLocationClient.lastLocation
                 .addOnSuccessListener { location : Location? ->
@@ -228,8 +214,10 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         requestCode: Int,
         permissions: Array<String>,
         grantResults: IntArray) {
+        // Check if location permissions are granted and if so enable the
+        // location data layer.
         if (requestCode == REQUEST_LOCATION_PERMISSION) {
-            if (grantResults.contains(PackageManager.PERMISSION_GRANTED)) {
+            if (grantResults.size > 0 && (grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
                 enableMyLocation()
             }
         }
@@ -237,9 +225,17 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     private fun setMapLongClick(map: GoogleMap) {
         map.setOnMapLongClickListener { latLng ->
+            binding.buttonSave.setOnClickListener {
+                _viewModel.latitude.value = latLng.latitude
+                _viewModel.longitude.value = latLng.longitude
+                _viewModel.reminderSelectedLocationStr.value = getString(R.string.dropped_pin)
+                _viewModel.navigationCommand.value = NavigationCommand.Back
+            }
+
             map.addMarker(
                 MarkerOptions()
                     .position(latLng)
+                    .title(getString(R.string.dropped_pin))
             )
         }
     }
