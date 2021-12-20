@@ -19,6 +19,7 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
@@ -52,9 +53,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     //For getting last location
     private lateinit var fusedLocationClient: FusedLocationProviderClient
-
-    //updated
-    private var isLocationSelected = false
 
 
     override fun onCreateView(
@@ -202,8 +200,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
         }
         else {
-            ActivityCompat.requestPermissions(
-                requireActivity(),
+            requestPermissions(
                 arrayOf<String>(Manifest.permission.ACCESS_FINE_LOCATION),
                 REQUEST_LOCATION_PERMISSION
             )
@@ -219,6 +216,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         if (requestCode == REQUEST_LOCATION_PERMISSION) {
             if (grantResults.size > 0 && (grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
                 enableMyLocation()
+            } else {
+                _viewModel.showErrorMessage.postValue(getString(R.string.permission_denied_explanation))
             }
         }
     }
