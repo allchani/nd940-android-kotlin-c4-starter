@@ -175,8 +175,8 @@ class SaveReminderFragment : BaseFragment() {
         ) {
             // Use snackbar for explain about permission
             Snackbar.make(
-                this.requireView(),
-                //   binding.root,
+                //this.requireView(),
+                binding.root,
                 R.string.permission_denied_explanation,
                 Snackbar.LENGTH_INDEFINITE
             )
@@ -205,7 +205,8 @@ class SaveReminderFragment : BaseFragment() {
         locationSettingsResponseTask.addOnFailureListener { exception ->
             if (exception is ResolvableApiException && resolve) {
                 try {
-                    startIntentSenderForResult( exception.resolution.intentSender,
+                    startIntentSenderForResult(
+                        exception.resolution.intentSender,
                         REQUEST_TURN_DEVICE_LOCATION_ON,
                         null,
                         0,
@@ -236,45 +237,45 @@ class SaveReminderFragment : BaseFragment() {
         }
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_TURN_DEVICE_LOCATION_ON) {
+            // We don't rely on the result code, but just check the location setting again
+            checkDeviceLocationSettingsAndStartGeofence(false)
+        }
+    }
+
     @SuppressLint("MissingPermission")
     private fun addGeofenceForReminder() {
 
-        if (this::reminderData.isInitialized) {
-            val currentGeofence = reminderData
+        val geofence = Geofence.Builder()
+            .setRequestId(reminderData.id)
+            .setCircularRegion(
+                reminderData.latitude!!,
+                reminderData.longitude!!,
+                GEOFENCE_RADIUS_IN_METERS
+            )
+            .setExpirationDuration(Geofence.NEVER_EXPIRE)
+            .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
+            .build()
 
-            val geofence = Geofence.Builder()
-                .setRequestId(currentGeofence.id)
-                .setCircularRegion(
-                    currentGeofence.latitude!!,
-                    currentGeofence.longitude!!,
-                    GEOFENCE_RADIUS_IN_METERS
-                )
-                .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
-                .build()
+        val geofencingRequest = GeofencingRequest.Builder()
+            .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
+            .addGeofence(geofence)
+            .build()
 
-            val geofencingRequest = GeofencingRequest.Builder()
-                .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
-                .addGeofence(geofence)
-                .build()
 
-            geofencingClient.removeGeofences(geofencePendingIntent)?.run {
-                addOnCompleteListener {
-                    geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent)?.run {
-                        addOnSuccessListener {
-                            _viewModel.validateAndSaveReminder(reminderData)
-                            _viewModel.showSnackBarInt.value = R.string.geofences_added
-                            Log.e("Add Geofence", geofence.requestId)
-                        }
-                        addOnFailureListener {
-                            _viewModel.showSnackBarInt.value = R.string.geofences_not_added
-                            if ((it.message != null)) {
-                                Log.w(TAG, it.message!!)
-                            }
-                        }
-                    }
+        geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent)?.run {
+            addOnSuccessListener {
+                _viewModel.validateAndSaveReminder(reminderData)
+                _viewModel.showSnackBarInt.value = R.string.geofences_added
+                Log.e("Add Geofence", geofence.requestId)
+            }
+            addOnFailureListener {
+                _viewModel.showSnackBarInt.value = R.string.geofences_not_added
+                if ((it.message != null)) {
+                    Log.w(TAG, it.message!!)
                 }
-
             }
         }
     }

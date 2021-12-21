@@ -132,17 +132,13 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
 
-        //        TODO: add style to the map
-        setMapStyle(map)
 
-        //        TODO: zoom to the user location after taking his permission
+        setMapStyle(map)
         enableMyLocation()
 //        val busan = LatLng(35.13,129.05)
 //        map.moveCamera(CameraUpdateFactory.newLatLngZoom(busan, 15f))
 
-        //        TODO: put a marker to location that the user selected
         setMapLongClick(map)
-
         setPoiClick(map)
 
     }
@@ -248,6 +244,12 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                     .title(poi.name)
             )
             poiMarker.showInfoWindow()
+            binding.buttonSave.setOnClickListener {
+                _viewModel.latitude.value = poi.latLng.latitude
+                _viewModel.longitude.value = poi.latLng.longitude
+                _viewModel.reminderSelectedLocationStr.value = poi.name
+                _viewModel.navigationCommand.value = NavigationCommand.Back
+            }
         }
     }
 }
